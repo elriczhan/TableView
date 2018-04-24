@@ -1,17 +1,38 @@
+/*
+ * Copyright (c) 2018. Evren Coşkun
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package com.evrencoskun.tableviewsample.tableview;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 import com.evrencoskun.tableview.adapter.AbstractTableAdapter;
 import com.evrencoskun.tableview.adapter.recyclerview.holder.AbstractViewHolder;
+import com.evrencoskun.tableview.sort.SortState;
+import com.evrencoskun.tableviewsample.MainFragment;
 import com.evrencoskun.tableviewsample.R;
 import com.evrencoskun.tableviewsample.tableview.holder.CellViewHolder;
 import com.evrencoskun.tableviewsample.tableview.holder.ColumnHeaderViewHolder;
+import com.evrencoskun.tableviewsample.tableview.holder.GenderCellViewHolder;
+import com.evrencoskun.tableviewsample.tableview.holder.MoodCellViewHolder;
 import com.evrencoskun.tableviewsample.tableview.holder.RowHeaderViewHolder;
 import com.evrencoskun.tableviewsample.tableview.model.Cell;
 import com.evrencoskun.tableviewsample.tableview.model.ColumnHeader;
@@ -24,6 +45,11 @@ import com.evrencoskun.tableviewsample.tableview.model.RowHeader;
  */
 
 public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHeader, Cell> {
+
+    // Cell View Types by Column Position
+    private static final int MOOD_CELL_TYPE = 1;
+    private static final int GENDER_CELL_TYPE = 2;
+    // add new one if it necessary..
 
     private static final String LOG_TAG = TableViewAdapter.class.getSimpleName();
 
@@ -44,13 +70,30 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
      */
     @Override
     public RecyclerView.ViewHolder onCreateCellViewHolder(ViewGroup parent, int viewType) {
+        View layout;
 
-        // Get Cell xml Layout
-        View layout = LayoutInflater.from(m_jContext).inflate(R.layout.table_view_cell_layout,
-                parent, false);
+        switch (viewType) {
+            case MOOD_CELL_TYPE:
+                // Get image cell layout which has ImageView on the base instead of TextView.
+                layout = LayoutInflater.from(mContext).inflate(R.layout
+                        .table_view_image_cell_layout, parent, false);
 
-        // Create a Cell ViewHolder
-        return new CellViewHolder(layout);
+                return new MoodCellViewHolder(layout);
+            case GENDER_CELL_TYPE:
+                // Get image cell layout which has ImageView instead of TextView.
+                layout = LayoutInflater.from(mContext).inflate(R.layout
+                        .table_view_image_cell_layout, parent, false);
+
+                return new GenderCellViewHolder(layout);
+            default:
+                // For cells that display a text
+                layout = LayoutInflater.from(mContext).inflate(R.layout.table_view_cell_layout,
+                        parent, false);
+
+                // Create a Cell ViewHolder
+                return new CellViewHolder(layout);
+
+        }
     }
 
     /**
@@ -58,31 +101,34 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
      * Called by Cell RecyclerView of the TableView to display the data at the specified position.
      * This method gives you everything you need about a cell item.
      *
-     * @param holder       : This is one of your cell ViewHolders that was created on
-     *                     ```onCreateCellViewHolder``` method. In this example we have created
-     *                     "CellViewHolder" holder.
-     * @param p_jValue     : This is the cell view model located on this X and Y position. In this
-     *                     example, the model class is "Cell".
-     * @param p_nXPosition : This is the X (Column) position of the cell item.
-     * @param p_nYPosition : This is the Y (Row) position of the cell item.
+     * @param holder         : This is one of your cell ViewHolders that was created on
+     *                       ```onCreateCellViewHolder``` method. In this example we have created
+     *                       "CellViewHolder" holder.
+     * @param cellItemModel  : This is the cell view model located on this X and Y position. In this
+     *                       example, the model class is "Cell".
+     * @param columnPosition : This is the X (Column) position of the cell item.
+     * @param rowPosition    : This is the Y (Row) position of the cell item.
      *
      * @see #onCreateCellViewHolder(ViewGroup, int) ;
      */
     @Override
-    public void onBindCellViewHolder(AbstractViewHolder holder, Object p_jValue, int
-            p_nXPosition, int p_nYPosition) {
-        Cell cell = (Cell) p_jValue;
+    public void onBindCellViewHolder(AbstractViewHolder holder, Object cellItemModel, int
+            columnPosition, int rowPosition) {
+        Cell cell = (Cell) cellItemModel;
 
-        // Get the holder to update cell item text
-        CellViewHolder viewHolder = (CellViewHolder) holder;
-        viewHolder.cell_textview.setText(String.valueOf(cell.getData()));
+        if (holder instanceof GenderCellViewHolder) {
+            GenderCellViewHolder viewHolder = (GenderCellViewHolder) holder;
+            viewHolder.setData(cell.getData());
 
-        // If your TableView should have auto resize for cells & columns.
-        // Then you should consider the below lines. Otherwise, you can ignore them.
+        } else if (holder instanceof MoodCellViewHolder) {
+            MoodCellViewHolder viewHolder = (MoodCellViewHolder) holder;
+            viewHolder.setData(cell.getData());
 
-        // It is necessary to remeasure itself.
-        viewHolder.cell_container.getLayoutParams().width = LinearLayout.LayoutParams.WRAP_CONTENT;
-        viewHolder.cell_textview.requestLayout();
+        } else {
+            // Get the holder to update cell item text
+            CellViewHolder viewHolder = (CellViewHolder) holder;
+            viewHolder.setData(cell.getData());
+        }
     }
 
     /**
@@ -99,7 +145,7 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
     public RecyclerView.ViewHolder onCreateColumnHeaderViewHolder(ViewGroup parent, int viewType) {
 
         // Get Column Header xml Layout
-        View layout = LayoutInflater.from(m_jContext).inflate(R.layout
+        View layout = LayoutInflater.from(mContext).inflate(R.layout
                 .table_view_column_header_layout, parent, false);
 
         // Create a ColumnHeader ViewHolder
@@ -112,19 +158,19 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
      * the specified position. This method gives you everything you need about a column header
      * item.
      *
-     * @param holder   : This is one of your column header ViewHolders that was created on
-     *                 ```onCreateColumnHeaderViewHolder``` method. In this example we have created
-     *                 "ColumnHeaderViewHolder" holder.
-     * @param p_jValue : This is the column header view model located on this X position. In this
-     *                 example, the model class is "ColumnHeader".
-     * @param position : This is the X (Column) position of the column header item.
+     * @param holder                : This is one of your column header ViewHolders that was created
+     *                              on ```onCreateColumnHeaderViewHolder``` method. In this example
+     *                              we have created "ColumnHeaderViewHolder" holder.
+     * @param columnHeaderItemModel : This is the column header view model located on this X
+     *                              position. In this example, the model class is "ColumnHeader".
+     * @param columnPosition        : This is the X (Column) position of the column header item.
      *
      * @see #onCreateColumnHeaderViewHolder(ViewGroup, int) ;
      */
     @Override
-    public void onBindColumnHeaderViewHolder(AbstractViewHolder holder, Object p_jValue, int
-            position) {
-        ColumnHeader columnHeader = (ColumnHeader) p_jValue;
+    public void onBindColumnHeaderViewHolder(AbstractViewHolder holder, Object
+            columnHeaderItemModel, int columnPosition) {
+        ColumnHeader columnHeader = (ColumnHeader) columnHeaderItemModel;
 
         // Get the holder to update cell item text
         ColumnHeaderViewHolder columnHeaderViewHolder = (ColumnHeaderViewHolder) holder;
@@ -145,7 +191,7 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
     public RecyclerView.ViewHolder onCreateRowHeaderViewHolder(ViewGroup parent, int viewType) {
 
         // Get Row Header xml Layout
-        View layout = LayoutInflater.from(m_jContext).inflate(R.layout
+        View layout = LayoutInflater.from(mContext).inflate(R.layout
                 .table_view_row_header_layout, parent, false);
 
         // Create a Row Header ViewHolder
@@ -158,19 +204,19 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
      * method is Called by RowHeader RecyclerView of the TableView to display the data at the
      * specified position. This method gives you everything you need about a row header item.
      *
-     * @param holder   : This is one of your row header ViewHolders that was created on
-     *                 ```onCreateRowHeaderViewHolder``` method. In this example we have created
-     *                 "RowHeaderViewHolder" holder.
-     * @param p_jValue : This is the row header view model located on this Y position. In this
-     *                 example, the model class is "RowHeader".
-     * @param position : This is the Y (row) position of the row header item.
+     * @param holder             : This is one of your row header ViewHolders that was created on
+     *                           ```onCreateRowHeaderViewHolder``` method. In this example we have
+     *                           created "RowHeaderViewHolder" holder.
+     * @param rowHeaderItemModel : This is the row header view model located on this Y position. In
+     *                           this example, the model class is "RowHeader".
+     * @param rowPosition        : This is the Y (row) position of the row header item.
      *
      * @see #onCreateRowHeaderViewHolder(ViewGroup, int) ;
      */
     @Override
-    public void onBindRowHeaderViewHolder(AbstractViewHolder holder, Object p_jValue, int
-            position) {
-        RowHeader rowHeader = (RowHeader) p_jValue;
+    public void onBindRowHeaderViewHolder(AbstractViewHolder holder, Object rowHeaderItemModel,
+                                          int rowPosition) {
+        RowHeader rowHeader = (RowHeader) rowHeaderItemModel;
 
         // Get the holder to update row header item text
         RowHeaderViewHolder rowHeaderViewHolder = (RowHeaderViewHolder) holder;
@@ -181,7 +227,21 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
     @Override
     public View onCreateCornerView() {
         // Get Corner xml layout
-        return LayoutInflater.from(m_jContext).inflate(R.layout.table_view_corner_layout, null);
+        View corner = LayoutInflater.from(mContext).inflate(R.layout.table_view_corner_layout, null);
+        corner.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                SortState sortState = TableViewAdapter.this.getTableView().getRowHeaderSortingStatus();
+                if(sortState != SortState.ASCENDING) {
+                    Log.d("TableViewAdapter", "Order Ascending");
+                    TableViewAdapter.this.getTableView().sortRowHeader(SortState.ASCENDING);
+                } else {
+                    Log.d("TableViewAdapter", "Order Descending");
+                    TableViewAdapter.this.getTableView().sortRowHeader(SortState.DESCENDING);
+                }
+            }
+        });
+        return corner;
     }
 
     @Override
@@ -203,11 +263,19 @@ public class TableViewAdapter extends AbstractTableAdapter<ColumnHeader, RowHead
     }
 
     @Override
-    public int getCellItemViewType(int position) {
+    public int getCellItemViewType(int column) {
         // The unique ID for this type of cell item
         // If you have different items for Cell View by X (Column) position,
         // then you should fill this method to be able create different
         // type of CellViewHolder on "onCreateCellViewHolder"
-        return 0;
+        switch (column) {
+            case MainFragment.MOOD_COLUMN_INDEX:
+                return MOOD_CELL_TYPE;
+            case MainFragment.GENDER_COLUMN_INDEX:
+                return GENDER_CELL_TYPE;
+            default:
+                // Default view type
+                return 0;
+        }
     }
 }

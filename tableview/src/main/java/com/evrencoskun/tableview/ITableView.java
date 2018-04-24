@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2018. Evren Coşkun
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
+
 package com.evrencoskun.tableview;
 
 import android.support.v7.widget.DividerItemDecoration;
@@ -7,6 +24,9 @@ import android.view.ViewGroup;
 
 import com.evrencoskun.tableview.adapter.AbstractTableAdapter;
 import com.evrencoskun.tableview.adapter.recyclerview.CellRecyclerView;
+import com.evrencoskun.tableview.filter.Filter;
+import com.evrencoskun.tableview.handler.ColumnSortHandler;
+import com.evrencoskun.tableview.handler.FilterHandler;
 import com.evrencoskun.tableview.handler.SelectionHandler;
 import com.evrencoskun.tableview.layoutmanager.CellLayoutManager;
 import com.evrencoskun.tableview.layoutmanager.ColumnHeaderLayoutManager;
@@ -31,8 +51,6 @@ public interface ITableView {
 
     boolean isSortable();
 
-    boolean isRowVisible(int row);
-
     CellRecyclerView getCellRecyclerView();
 
     CellRecyclerView getColumnHeaderRecyclerView();
@@ -52,22 +70,42 @@ public interface ITableView {
     ITableViewListener getTableViewListener();
 
     SelectionHandler getSelectionHandler();
+    
+    ColumnSortHandler getColumnSortHandler();
 
     DividerItemDecoration getHorizontalItemDecoration();
 
     SortState getSortingStatus(int column);
 
+    SortState getRowHeaderSortingStatus();
+
     void scrollToColumnPosition(int column);
+
+    void scrollToColumnPosition(int column, int offset);
 
     void scrollToRowPosition(int row);
 
-    void clearHiddenRowList();
+    void scrollToRowPosition(int row, int offset);
 
     void showRow(int row);
 
     void hideRow(int row);
 
+    boolean isRowVisible(int row);
+
     void showAllHiddenRows();
+
+    void clearHiddenRowList();
+
+    void showColumn(int column);
+
+    void hideColumn(int column);
+
+    boolean isColumnVisible(int column);
+
+    void showAllHiddenColumns();
+
+    void clearHiddenColumnList();
 
     int getShadowColor();
 
@@ -75,9 +113,29 @@ public interface ITableView {
 
     int getUnSelectedColor();
 
-    void sortColumn(int p_nColumnPosition, SortState p_eSortState);
+    void sortColumn(int columnPosition, SortState sortState);
+
+    void sortRowHeader(SortState sortState);
 
     void remeasureColumnWidth(int column);
 
+    int getRowHeaderWidth();
+
+    void setRowHeaderWidth(int rowHeaderWidth);
+
     AbstractTableAdapter getAdapter();
+
+    /**
+     * Filters the whole table using the provided Filter object which supports multiple filters.
+     *
+     * @param filter The filter object.
+     */
+    void filter(Filter filter);
+
+    /**
+     * Retrieves the FilterHandler of the TableView.
+     *
+     * @return The FilterHandler of the TableView.
+     */
+    FilterHandler getFilterHandler();
 }
